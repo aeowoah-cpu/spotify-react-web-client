@@ -1,52 +1,37 @@
 import { useCallback } from 'react';
 
-import { Popconfirm, Space } from 'antd';
+import { Space } from 'antd';
 import { Link } from 'react-router-dom';
-import { CloseIcon } from '../../../Icons';
-import { WhiteButton } from '../../../Button';
-
-// Utils
-import { useTranslation } from 'react-i18next';
 
 // Redux
-import { uiActions } from '../../../../store/slices/ui';
-import { loginToSpotify } from '../../../../store/slices/auth';
+import { authActions } from '../../../../store/slices/auth';
 import { useAppDispatch, useAppSelector } from '../../../../store/store';
 
 // Constants
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
 import useIsMobile from '../../../../utils/isMobile';
 
-const LoginButton = () => {
-  const { t } = useTranslation(['home']);
+const LogoutButton = () => {
   const dispatch = useAppDispatch();
-  const tooltipOpen = useAppSelector((state) => state.ui.loginButtonOpen);
 
-  const onClose = useCallback(() => {
-    dispatch(uiActions.closeLoginButton());
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('peytotoria_user');
+    dispatch(authActions.logout());
   }, [dispatch]);
 
   return (
-    <Popconfirm
-      icon={null}
-      open={tooltipOpen}
-      onCancel={onClose}
-      placement='bottomLeft'
-      rootClassName='login-tooltip'
-      cancelText={<CloseIcon />}
-      title={t('You’re logged out')}
-      cancelButtonProps={{ type: 'text' }}
-      okButtonProps={{ className: 'white-button small' }}
-      description={t('Log in to add this to your Liked Songs.')}
+    <button
+      className='transparent-button'
+      style={{ fontSize: '0.8rem', padding: '5px 16px' }}
+      onClick={handleLogout}
     >
-      <WhiteButton title={t('Log In')} onClick={() => dispatch(loginToSpotify())} />
-    </Popconfirm>
+      Log Out
+    </button>
   );
 };
 
 const Header = ({ opacity }: { opacity: number; title?: string }) => {
   const isMobile = useIsMobile();
-  const { t } = useTranslation(['navbar']);
 
   const user = useAppSelector(
     (state) => state.auth.user,
@@ -60,39 +45,31 @@ const Header = ({ opacity }: { opacity: number; title?: string }) => {
     >
       <div className='flex flex-row items-center'>
         <Space>
-          {!isMobile ? (
-            <a
-              target='_blank'
-              rel='noreferrer'
-              className='contact-me'
-              href='https://github.com/francoborrelli/spotify-react-web-client'
-            >
-              <span>{t('Source code')}</span>
-            </a>
-          ) : null}
-
-          {/*
-          <div className='news'>
-            <News />
-          </div> */}
-
           {user ? (
-            <div className='avatar-container'>
-              <Link to={`/users/${user!.id}`}>
-                <img
-                  className='avatar'
-                  id='user-avatar'
-                  alt='User Avatar'
-                  style={{ marginTop: -1 }}
-                  src={
-                    user?.images && user.images.length ? user.images[0].url : ARTISTS_DEFAULT_IMAGE
-                  }
-                />
-              </Link>
+            <div className='flex items-center gap-3'>
+              {!isMobile && (
+                <Link to={`/users/${user.id}`} style={{ textDecoration: 'none' }}>
+                  <div className='avatar-container' style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <img
+                      className='avatar'
+                      id='user-avatar'
+                      alt='User Avatar'
+                      style={{ marginTop: -1 }}
+                      src={
+                        user.images && user.images.length
+                          ? user.images[0].url
+                          : ARTISTS_DEFAULT_IMAGE
+                      }
+                    />
+                    <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 700 }}>
+                      {user.display_name}
+                    </span>
+                  </div>
+                </Link>
+              )}
+              <LogoutButton />
             </div>
-          ) : (
-            <LoginButton />
-          )}
+          ) : null}
         </Space>
       </div>
     </div>

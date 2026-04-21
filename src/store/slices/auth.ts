@@ -1,51 +1,18 @@
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-// Utils
-import axios from '../../axios';
-import login from '../../utils/spotify/login';
-
-// Services
-import { authService } from '../../services/auth';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // Interfaces
 import type { User } from '../../interfaces/user';
-import { getFromLocalStorageWithExpiry } from '../../utils/localstorage';
 
 const initialState: { token?: string; playerLoaded: boolean; user?: User; requesting: boolean } = {
   user: undefined,
-  requesting: true,
-  playerLoaded: false,
-  token: getFromLocalStorageWithExpiry('access_token') || undefined,
+  requesting: false,
+  playerLoaded: true,
+  token: undefined,
 };
 
-export const loginToSpotify = createAsyncThunk<{ token?: string; loaded: boolean }>(
-  'auth/loginToSpotify',
-  async (_, thunkAPI) => {
-    const userToken: string | undefined = getFromLocalStorageWithExpiry('access_token') as string;
-
-    if (userToken) {
-      axios.defaults.headers.common['Authorization'] = 'Bearer ' + userToken;
-      thunkAPI.dispatch(fetchUser());
-      return { token: userToken, loaded: false };
-    }
-
-    let [requestedToken, requestUser] = await login.getToken();
-    if (requestUser) thunkAPI.dispatch(fetchUser());
-
-    if (!requestedToken) {
-      login.logInWithSpotify();
-    } else {
-      axios.defaults.headers.common['Authorization'] = 'Bearer ' + requestedToken;
-    }
-
-    return { token: requestedToken, loaded: true };
-  }
-);
-
-export const fetchUser = createAsyncThunk('auth/fetchUser', async () => {
-  const response = await authService.fetchUser();
-  return response.data;
-});
+// Stub thunk kept for compatibility with components that still import it
+export const loginToSpotify = () => ({ type: 'auth/noOp' });
+export const fetchUser = () => ({ type: 'auth/noOp' });
 
 const authSlice = createSlice({
   name: 'auth',
@@ -60,16 +27,14 @@ const authSlice = createSlice({
     setPlayerLoaded(state, action: PayloadAction<{ playerLoaded: boolean }>) {
       state.playerLoaded = action.payload.playerLoaded;
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(loginToSpotify.fulfilled, (state, action) => {
-      state.token = action.payload.token;
-      state.requesting = !action.payload.loaded;
-    });
-    builder.addCase(fetchUser.fulfilled, (state, action) => {
-      state.user = action.payload;
+    setUser(state, action: PayloadAction<{ user: User }>) {
+      state.user = action.payload.user;
       state.requesting = false;
-    });
+    },
+    logout(state) {
+      state.user = undefined;
+      state.token = undefined;
+    },
   },
 });
 

@@ -3,8 +3,7 @@ import './styles/App.scss';
 
 // Utils
 import i18next from 'i18next';
-import { FC, Suspense, lazy, memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { getFromLocalStorageWithExpiry } from './utils/localstorage';
+import { FC, Suspense, lazy, memo, useCallback, useEffect, useRef, useState } from 'react';
 
 // Components
 import { ConfigProvider } from 'antd';
@@ -15,18 +14,16 @@ import { Route, BrowserRouter as Router, Routes, useLocation } from 'react-route
 import { Provider } from 'react-redux';
 import { uiActions } from './store/slices/ui';
 import { PersistGate } from 'redux-persist/integration/react';
-import { authActions, loginToSpotify } from './store/slices/auth';
+import { authActions } from './store/slices/auth';
 import { persistor, store, useAppDispatch, useAppSelector } from './store/store';
-
-// Spotify
-import WebPlayback, { WebPlaybackProps } from './utils/spotify/webPlayback';
 
 // Pages
 import SearchContainer from './pages/Search/Container';
-import { playerService } from './services/player';
+import AuthPage from './pages/Auth';
 import { Spinner } from './components/spinner/spinner';
 
 const Home = lazy(() => import('./pages/Home'));
+const MyMusicPage = lazy(() => import('./pages/MyMusic'));
 const Page404 = lazy(() => import('./pages/404'));
 const AlbumView = lazy(() => import('./pages/Album'));
 const GenrePage = lazy(() => import('./pages/Genre'));
@@ -55,48 +52,33 @@ window.addEventListener('resize', () => {
   }
 });
 
-const SpotifyContainer: FC<{ children: any }> = memo(({ children }) => {
+const LocalAuthContainer: FC<{ children: any }> = memo(({ children }) => {
   const dispatch = useAppDispatch();
-
   const user = useAppSelector((state) => !!state.auth.user);
-  const token = useAppSelector((state) => state.auth.token);
-  const requesting = useAppSelector((state) => state.auth.requesting);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    const tokenInLocalStorage = getFromLocalStorageWithExpiry('access_token');
-    dispatch(authActions.setToken({ token: tokenInLocalStorage }));
-
-    if (tokenInLocalStorage) {
-      dispatch(authActions.fetchUser());
-    } else {
-      dispatch(loginToSpotify());
-    }
+    try {
+      const saved = localStorage.getItem('peytotoria_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        dispatch(authActions.setUser({ user: parsed }));
+      }
+    } catch {}
+    setInitialized(true);
   }, [dispatch]);
 
-  const webPlaybackSdkProps: WebPlaybackProps = useMemo(
-    () => ({
-      playerAutoConnect: true,
-      playerInitialVolume: 1.0,
-      playerRefreshRateMs: 1000,
-      playerName: 'Spotify React Player',
-      onPlayerRequestAccessToken: () => Promise.resolve(token!),
-      onPlayerLoading: () => {},
-      onPlayerWaitingForDevice: () => {
-        dispatch(authActions.setPlayerLoaded({ playerLoaded: true }));
-      },
-      onPlayerError: (e) => {
-        dispatch(loginToSpotify());
-      },
-      onPlayerDeviceSelected: () => {
-        dispatch(authActions.setPlayerLoaded({ playerLoaded: true }));
-      },
-    }),
-    [dispatch, token]
-  );
+  if (!initialized) {
+    return (
+      <div style={{ background: '#000', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spinner loading />
+      </div>
+    );
+  }
 
-  if (!user) return <Spinner loading={requesting}>{children}</Spinner>;
+  if (!user) return <AuthPage />;
 
-  return <WebPlayback {...webPlaybackSdkProps}>{children}</WebPlayback>;
+  return <>{children}</>;
 });
 
 const RoutesComponent = memo(() => {
@@ -114,6 +96,7 @@ const RoutesComponent = memo(() => {
     () =>
       [
         { path: '', element: <Home container={container} />, public: true },
+        { path: '/my-music', element: <MyMusicPage container={container} />, public: true },
         { path: '/collection/tracks', element: <LikedSongsPage container={container} /> },
         {
           public: true,
@@ -206,7 +189,7 @@ const RoutesComponent = memo(() => {
 const RootComponent = () => {
   const user = useAppSelector((state) => !!state.auth.user);
   const language = useAppSelector((state) => state.language.language);
-  const playing = useAppSelector((state) => !state.spotify.state?.paused);
+  const playing = useAppSelector((state) => state.localPlayer.isPlaying);
 
   useEffect(() => {
     document.documentElement.setAttribute('lang', language);
@@ -221,8 +204,7 @@ const RootComponent = () => {
       e.stopPropagation();
       if (e.key === ' ' || e.code === 'Space' || e.keyCode === 32) {
         e.preventDefault();
-        const request = !playing ? playerService.startPlayback() : playerService.pausePlayback();
-        request.then().catch(() => {});
+        import('./utils/audioPlayer').then(({ audioPlayer }) => audioPlayer.toggle());
       }
     },
     [playing]
@@ -261,9 +243,9 @@ function App() {
     <ConfigProvider theme={{ token: { fontFamily: 'SpotifyMixUI' } }}>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <SpotifyContainer>
+          <LocalAuthContainer>
             <RootComponent />
-          </SpotifyContainer>
+          </LocalAuthContainer>
         </PersistGate>
       </Provider>
     </ConfigProvider>
