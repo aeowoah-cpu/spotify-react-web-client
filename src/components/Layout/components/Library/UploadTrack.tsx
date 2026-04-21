@@ -23,15 +23,19 @@ export const UploadTrackButton = () => {
       if (!file.type.startsWith('audio/')) continue;
       const url = URL.createObjectURL(file);
 
-      // Extract duration via AudioContext
+      // Use a separate temp URL to probe duration — never revoke `url` since the player needs it
+      const tempUrl = URL.createObjectURL(file);
       const duration = await new Promise<number>((resolve) => {
         const audio = new Audio();
         audio.addEventListener('loadedmetadata', () => {
           resolve(Math.floor(audio.duration * 1000));
-          URL.revokeObjectURL(audio.src); // safe – we already have `url` from createObjectURL on the original file
+          URL.revokeObjectURL(tempUrl);
         });
-        audio.addEventListener('error', () => resolve(0));
-        audio.src = url;
+        audio.addEventListener('error', () => {
+          URL.revokeObjectURL(tempUrl);
+          resolve(0);
+        });
+        audio.src = tempUrl;
       });
 
       // Parse name/artist from filename: "Artist - Title.mp3" or just "Title.mp3"
