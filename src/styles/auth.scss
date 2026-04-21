@@ -30,7 +30,13 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 28px;
-  color: #1db954;
+}
+
+.auth-logo-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  object-fit: contain;
 }
 
 .auth-logo-text {
@@ -38,6 +44,36 @@
   font-weight: 800;
   color: #fff;
   letter-spacing: -0.5px;
+}
+
+.auth-info {
+  color: #1db954;
+  font-size: 0.875rem;
+  margin: 0;
+  padding: 10px 14px;
+  background-color: rgba(29, 185, 84, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(29, 185, 84, 0.3);
+}
+
+.auth-powered {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  color: #6a6a6a;
+  font-size: 0.75rem;
+
+  svg {
+    color: #fa2d48;
+    flex-shrink: 0;
+  }
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 .auth-heading {

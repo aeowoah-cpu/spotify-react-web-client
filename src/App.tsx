@@ -21,6 +21,7 @@ import { persistor, store, useAppDispatch, useAppSelector } from './store/store'
 import SearchContainer from './pages/Search/Container';
 import AuthPage from './pages/Auth';
 import { Spinner } from './components/spinner/spinner';
+import { supabase } from './utils/supabase';
 
 const Home = lazy(() => import('./pages/Home'));
 const MyMusicPage = lazy(() => import('./pages/MyMusic'));
@@ -52,20 +53,66 @@ window.addEventListener('resize', () => {
   }
 });
 
+const buildProfile = (userId: string, email: string, displayName: string) => ({
+  id: userId,
+  display_name: displayName,
+  email,
+  images: [] as any[],
+  product: 'peytotoria',
+  type: 'user',
+  uri: `peytotoria:user:${userId}`,
+  href: '',
+  external_urls: { spotify: '' },
+  followers: { href: null, total: 0 },
+  country: 'US',
+  explicit_content: { filter_enabled: false, filter_locked: false },
+});
+
 const LocalAuthContainer: FC<{ children: any }> = memo(({ children }) => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => !!state.auth.user);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('peytotoria_user');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        dispatch(authActions.setUser({ user: parsed }));
+    // Check for existing Supabase session on mount
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        const u = data.session.user;
+        const profile = buildProfile(
+          u.id,
+          u.email || '',
+          u.user_metadata?.display_name || u.email?.split('@')[0] || 'Listener',
+        );
+        localStorage.setItem('peytotoria_user', JSON.stringify(profile));
+        dispatch(authActions.setUser({ user: profile as any }));
+      } else {
+        // Fallback: check cached user
+        try {
+          const saved = localStorage.getItem('peytotoria_user');
+          if (saved) dispatch(authActions.setUser({ user: JSON.parse(saved) }));
+        } catch {}
       }
-    } catch {}
-    setInitialized(true);
+      setInitialized(true);
+    });
+
+    // Keep Redux in sync with Supabase auth state changes (logout, token refresh)
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const u = session.user;
+        const profile = buildProfile(
+          u.id,
+          u.email || '',
+          u.user_metadata?.display_name || u.email?.split('@')[0] || 'Listener',
+        );
+        localStorage.setItem('peytotoria_user', JSON.stringify(profile));
+        dispatch(authActions.setUser({ user: profile as any }));
+      } else {
+        localStorage.removeItem('peytotoria_user');
+        dispatch(authActions.logout());
+      }
+    });
+
+    return () => { listener.subscription.unsubscribe(); };
   }, [dispatch]);
 
   if (!initialized) {

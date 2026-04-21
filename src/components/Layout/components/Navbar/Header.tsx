@@ -7,6 +7,9 @@ import { Link } from 'react-router-dom';
 import { authActions } from '../../../../store/slices/auth';
 import { useAppDispatch, useAppSelector } from '../../../../store/store';
 
+// Utils
+import { supabase } from '../../../../utils/supabase';
+
 // Constants
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
 import useIsMobile from '../../../../utils/isMobile';
@@ -14,7 +17,8 @@ import useIsMobile from '../../../../utils/isMobile';
 const LogoutButton = () => {
   const dispatch = useAppDispatch();
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem('peytotoria_user');
     dispatch(authActions.logout());
   }, [dispatch]);
@@ -43,7 +47,17 @@ const Header = ({ opacity }: { opacity: number; title?: string }) => {
       className={`flex r-0 w-full flex-row items-center justify-between bg-gray-900 rounded-t-md z-10`}
       style={{ backgroundColor: `rgba(12, 12, 12, ${opacity}%)` }}
     >
-      <div className='flex flex-row items-center'>
+      <div className='flex flex-row items-center gap-3'>
+        {/* Brand logo */}
+        <Link to='/' style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <img src='/logo.png' alt='PeytOtoria' style={{ width: 28, height: 28, borderRadius: 7, objectFit: 'contain' }} />
+          {!isMobile && (
+            <span style={{ color: '#fff', fontWeight: 800, fontSize: '0.95rem', letterSpacing: '-0.3px' }}>
+              PeytOtoria
+            </span>
+          )}
+        </Link>
+
         <Space>
           {user ? (
             <div className='flex items-center gap-3'>
@@ -61,7 +75,7 @@ const Header = ({ opacity }: { opacity: number; title?: string }) => {
                           : ARTISTS_DEFAULT_IMAGE
                       }
                     />
-                    <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 700 }}>
+                    <span style={{ color: '#b3b3b3', fontSize: '0.85rem', fontWeight: 600 }}>
                       {user.display_name}
                     </span>
                   </div>
