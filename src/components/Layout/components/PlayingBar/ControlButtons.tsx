@@ -1,30 +1,31 @@
 import { Col, Row } from 'antd';
 import { Pause, Play, Replay, ReplayOne, ShuffleIcon, SkipBack, SkipNext } from '../../../Icons';
 
-// Utils
-import { useAppSelector } from '../../../../store/store';
+// Redux
+import { useAppDispatch, useAppSelector } from '../../../../store/store';
+import { localPlayerActions } from '../../../../store/slices/localPlayer';
 
-// Services
-import { playerService } from '../../../../services/player';
+// Audio
+import { audioPlayer } from '../../../../utils/audioPlayer';
 import { memo } from 'react';
 
 const ShuffleButton = memo(() => {
-  const shuffle = useAppSelector((state) => state.spotify.state?.shuffle);
+  const dispatch = useAppDispatch();
+  const shuffle = useAppSelector((state) => state.localPlayer.shuffle);
   return (
-    <button onClick={() => playerService.toggleShuffle(!shuffle).then()}>
-      <ShuffleIcon active={!!shuffle} />
+    <button onClick={() => dispatch(localPlayerActions.toggleShuffle())}>
+      <ShuffleIcon active={shuffle} />
     </button>
   );
 });
 
 const SkipBackButton = memo(() => {
-  const disabled = useAppSelector(
-    (state) => !state.spotify.state || state?.spotify.state.disallows.skipping_prev
-  );
+  const dispatch = useAppDispatch();
+  const hasTracks = useAppSelector((state) => state.localPlayer.tracks.length > 0);
   return (
     <button
-      className={disabled ? 'disabled' : ''}
-      onClick={() => !disabled && playerService.previousTrack().then()}
+      className={!hasTracks ? 'disabled' : ''}
+      onClick={() => hasTracks && dispatch(localPlayerActions.prev())}
     >
       <SkipBack />
     </button>
@@ -32,37 +33,29 @@ const SkipBackButton = memo(() => {
 });
 
 const PlayButton = memo(() => {
-  const isPlaying = useAppSelector((state) => !state.spotify.state?.paused);
-  const disabled = useAppSelector(
-    (state) =>
-      !state.spotify.state ||
-      (state.spotify.state?.disallows.pausing && state.spotify.state?.disallows.resuming)
-  );
+  const isPlaying = useAppSelector((state) => state.localPlayer.isPlaying);
+  const hasTrack = useAppSelector((state) => !!state.localPlayer.currentTrackId);
 
   return (
     <button
-      className={`player-pause-button ${disabled ? 'disabled' : ''}`}
+      className='player-pause-button'
       onClick={() => {
-        if (!disabled) {
-          return isPlaying
-            ? playerService.pausePlayback().then()
-            : playerService.startPlayback().then();
-        }
+        if (!hasTrack) return;
+        isPlaying ? audioPlayer.pause() : audioPlayer.play();
       }}
     >
-      {!isPlaying ? <Play /> : <Pause />}
+      {isPlaying ? <Pause /> : <Play />}
     </button>
   );
 });
 
 const SkipNextButton = memo(() => {
-  const disabled = useAppSelector(
-    (state) => !state.spotify.state || state.spotify.state?.disallows.skipping_next
-  );
+  const dispatch = useAppDispatch();
+  const hasTracks = useAppSelector((state) => state.localPlayer.tracks.length > 0);
   return (
     <button
-      className={disabled ? 'disabled' : ''}
-      onClick={() => !disabled && playerService.nextTrack().then()}
+      className={!hasTracks ? 'disabled' : ''}
+      onClick={() => hasTracks && dispatch(localPlayerActions.next())}
     >
       <SkipNext />
     </button>
@@ -70,18 +63,14 @@ const SkipNextButton = memo(() => {
 });
 
 const ReplayButton = memo(() => {
-  const repeat_mode = useAppSelector((state) => state.spotify.state?.repeat_mode);
-  const looping = repeat_mode === 1 || repeat_mode === 2;
+  const dispatch = useAppDispatch();
+  const repeat = useAppSelector((state) => state.localPlayer.repeat);
   return (
     <button
-      className={repeat_mode === 2 ? 'active-icon-button' : ''}
-      onClick={() =>
-        playerService.setRepeatMode(
-          repeat_mode === 2 ? 'off' : repeat_mode === 1 ? 'track' : 'context'
-        )
-      }
+      className={repeat !== 'off' ? 'active-icon-button' : ''}
+      onClick={() => dispatch(localPlayerActions.toggleRepeat())}
     >
-      {repeat_mode === 2 ? <ReplayOne active /> : <Replay active={looping} />}
+      {repeat === 'track' ? <ReplayOne active /> : <Replay active={repeat === 'all'} />}
     </button>
   );
 });

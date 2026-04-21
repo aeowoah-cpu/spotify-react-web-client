@@ -1,120 +1,84 @@
-import { FC, memo } from 'react';
-import { spotifyActions } from '../../../../store/slices/spotify';
-import { AddSongToLibraryButton } from '../../../Actions/AddSongToLibrary';
-import { useAppDispatch, useAppSelector } from '../../../../store/store';
-import { uiActions } from '../../../../store/slices/ui';
-import { Link } from 'react-router-dom';
-import { TrackActionsWrapper } from '../../../Actions/TrackActions';
-import { ArtistActionsWrapper } from '../../../Actions/ArtistActions';
+import { FC, memo, useEffect, useRef } from 'react';
+import { useAppSelector } from '../../../../store/store';
+import { audioPlayer } from '../../../../utils/audioPlayer';
 
-const ArrowDown = (
-  <svg
-    width={16}
-    height={16}
-    data-encore-id='icon'
-    role='img'
-    aria-hidden='true'
-    viewBox='0 0 16 16'
-    className='Svg-sc-ytk21e-0 dYnaPI'
-  >
-    <path d='M.47 4.97a.75.75 0 0 1 1.06 0L8 11.44l6.47-6.47a.75.75 0 1 1 1.06 1.06L8 13.56.47 6.03a.75.75 0 0 1 0-1.06z'></path>
+// ─── PlayerSync: bridges Redux currentTrackId changes → audioPlayer ───────────
+export const PlayerSync: FC = memo(() => {
+  const currentTrackId = useAppSelector((state) => state.localPlayer.currentTrackId);
+  const isPlaying = useAppSelector((state) => state.localPlayer.isPlaying);
+  const tracks = useAppSelector((state) => state.localPlayer.tracks);
+  const prevIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!currentTrackId) return;
+    if (currentTrackId === prevIdRef.current) return;
+
+    prevIdRef.current = currentTrackId;
+    const track = tracks.find((t) => t.id === currentTrackId);
+    if (track?.url) {
+      audioPlayer.setSource(track.url, isPlaying);
+    }
+  }, [currentTrackId]); // intentionally only on currentTrackId changes
+
+  return null;
+});
+
+// ─── Default music icon cover ─────────────────────────────────────────────────
+const MusicNoteSvg = () => (
+  <svg viewBox='0 0 24 24' fill='#b3b3b3' width='36' height='36'>
+    <path d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z' />
   </svg>
 );
 
-const ArrowUp = (
-  <svg
-    width={16}
-    height={16}
-    data-encore-id='icon'
-    role='img'
-    aria-hidden='true'
-    viewBox='0 0 16 16'
-    className='Svg-sc-ytk21e-0 dYnaPI'
-  >
-    <path d='M15.53 11.03a.75.75 0 0 1-1.06 1.06L8 4.56 1.53 11.03a.75.75 0 1 1-1.06-1.06L8 2.44l7.53 7.53a.75.75 0 0 1 0 1.06z'></path>
-  </svg>
-);
+// ─── SongDetails ──────────────────────────────────────────────────────────────
+const SongDetails: FC<{ isMobile?: boolean }> = memo(() => {
+  const currentTrack = useAppSelector((state) => {
+    const { tracks, currentTrackId } = state.localPlayer;
+    return tracks.find((t) => t.id === currentTrackId) ?? null;
+  });
 
-const SongDetails: FC<{ isMobile?: boolean }> = memo((props) => {
-  const dispatch = useAppDispatch();
-
-  const current_track = useAppSelector(
-    (state) => state.spotify.state?.track_window.current_track,
-    (prev, next) => prev?.id === next?.id
-  );
-  const isLiked = useAppSelector((state) => state.spotify.liked);
-  const detailsOpen = useAppSelector((state) => !state.ui.detailsCollapsed);
-
-  const handleToggle = () => {
-    dispatch(spotifyActions.setLiked({ liked: !isLiked }));
-  };
-
-  if (!current_track) return <div className='mobile-hidden' style={{ minWidth: 295 }}></div>;
+  if (!currentTrack) {
+    return <div className='mobile-hidden' style={{ minWidth: 295 }} />;
+  }
 
   return (
     <div className='flex flex-row items-center playing-container'>
       <div style={{ marginRight: 15 }}>
-        <TrackActionsWrapper
-          saved={isLiked}
-          track={current_track}
-          trigger={['contextMenu']}
-          onSavedToggle={handleToggle}
+        <div
+          className='playing-cover-container'
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 4,
+            overflow: 'hidden',
+            background: '#282828',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
         >
-          <div className='playing-cover-container'>
+          {currentTrack.coverUrl ? (
             <img
               alt='Album Cover'
               className='album-cover'
-              src={current_track?.album.images[0].url}
+              src={currentTrack.coverUrl}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
-            <button
-              aria-label='Now playing view'
-              className='playing-cover-details-button'
-              onClick={() => {
-                dispatch(uiActions.toggleDetails());
-              }}
-            >
-              {detailsOpen ? ArrowDown : ArrowUp}
-            </button>
-          </div>
-        </TrackActionsWrapper>
-      </div>
-      <div id='song-and-artist-name'>
-        <TrackActionsWrapper
-          saved={isLiked}
-          track={current_track}
-          trigger={['contextMenu']}
-          onSavedToggle={handleToggle}
-        >
-          <p className='text-white font-bold song-title' title={current_track?.name}>
-            {current_track?.name}
-          </p>
-        </TrackActionsWrapper>
-        <span
-          className='text-gray-200 song-artist'
-          title={current_track?.artists
-            .slice(0, 3)
-            .map((a) => a.name)
-            .join(', ')}
-        >
-          {current_track?.artists.slice(0, 3).map((a, i) => (
-            <span key={a.uri}>
-              <ArtistActionsWrapper artist={a} trigger={['contextMenu']}>
-                <Link to={`/artist/${a.uri.split(':').reverse()[0]}`}>{a.name}</Link>
-              </ArtistActionsWrapper>
-              {i < current_track.artists.slice(0, 3).length - 1 && ', '}
-            </span>
-          ))}
-        </span>
+          ) : (
+            <MusicNoteSvg />
+          )}
+        </div>
       </div>
 
-      {!props.isMobile ? (
-        <AddSongToLibraryButton
-          size={17}
-          isSaved={isLiked}
-          id={current_track?.id!}
-          onToggle={handleToggle}
-        />
-      ) : null}
+      <div id='song-and-artist-name'>
+        <p className='text-white font-bold song-title' title={currentTrack.name}>
+          {currentTrack.name}
+        </p>
+        <span className='text-gray-200 song-artist' title={currentTrack.artist}>
+          {currentTrack.artist}
+        </span>
+      </div>
     </div>
   );
 });

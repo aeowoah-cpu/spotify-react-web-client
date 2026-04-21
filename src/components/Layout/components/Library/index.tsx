@@ -1,4 +1,5 @@
 import YourLibrary from './list';
+import { UploadTrackButton } from './UploadTrack';
 
 // Redux
 import { useAppDispatch, useAppSelector } from '../../../../store/store';
@@ -14,16 +15,13 @@ export const Library: FC<LibraryProps> = () => {
   const user = useAppSelector((state) => !!state.auth.user);
 
   useEffect(() => {
-    if (user) {
-      dispatch(yourLibraryActions.fetchMyAlbums());
-      dispatch(yourLibraryActions.fetchMyArtists());
-      dispatch(yourLibraryActions.fetchMyPlaylists());
-    }
+    // Skip Spotify API calls — no token available
   }, [user, dispatch]);
 
   return (
     <div style={{ height: '100%' }}>
       <YourLibrary />
+      {user && <UploadTrackButton />}
     </div>
   );
 };

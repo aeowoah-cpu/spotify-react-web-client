@@ -5,6 +5,8 @@ import { TopTracks } from '../components/topTracks';
 import { MadeForYou } from '../components/madeForYou';
 import { NewReleases } from '../components/newReleases';
 import { FeaturePlaylists } from '../components/featurePlaylists';
+import { AppleTopSongs } from '../components/appleTopSongs';
+import { AppleNewReleases } from '../components/appleNewReleases';
 
 // Utils
 import { FC, memo, RefObject, useRef, useState } from 'react';
@@ -41,60 +43,26 @@ const HomePageContainer: FC<HomePageContainerProps> = memo((props) => {
           background: `linear-gradient(180deg, ${color} 2%, rgb(18, 18, 18) 18%)`,
         }}
       >
-        <Row gutter={user ? [16, 16] : undefined}>
+        <Row gutter={[16, 16]}>
+          {/* Apple Music — always visible, no token needed */}
+          <Col span={24}>
+            <AppleTopSongs />
+          </Col>
+
+          <Col span={24}>
+            <AppleNewReleases />
+          </Col>
+
+          {/* Legacy Spotify-backed sections — rendered only when Spotify data is available */}
           {user ? (
             <Col span={24}>
               <TopTracks setColor={setColor} />
             </Col>
           ) : null}
 
-          {user ? (
-            <Col span={24}>
-              <MadeForYou />
-            </Col>
-          ) : null}
-
-          {user ? (
-            <Col span={24}>
-              <TopMixes />
-            </Col>
-          ) : null}
-
           {user && section === 'ALL' ? (
             <Col span={24}>
               <RecentlyPlayed />
-            </Col>
-          ) : null}
-
-          <Col span={24}>
-            <FeaturePlaylists />
-          </Col>
-
-          {user ? (
-            <Col span={24}>
-              <YourPlaylists />
-            </Col>
-          ) : null}
-
-          <Col span={24}>
-            <NewReleases />
-          </Col>
-
-          {!user || section === 'MUSIC' ? (
-            <Col span={24}>
-              <Rankings />
-            </Col>
-          ) : null}
-
-          {!user || section === 'MUSIC' ? (
-            <Col span={24}>
-              <Trending />
-            </Col>
-          ) : null}
-
-          {user && section === 'ALL' ? (
-            <Col span={24}>
-              <FavouriteArtists />
             </Col>
           ) : null}
         </Row>

@@ -1,24 +1,18 @@
 import SongDetails from './SongDetails';
-import { useAppDispatch, useAppSelector } from '../../../../store/store';
+import { useAppSelector } from '../../../../store/store';
 import { Col, Row } from 'antd';
 import { ListIcon, Pause, Play } from '../../../Icons';
 
-// Redux
-import { playerService } from '../../../../services/player';
-import { useEffect, useState } from 'react';
-import { getImageAnalysis2 } from '../../../../utils/imageAnyliser';
+// Redux + Audio
+import { audioPlayer } from '../../../../utils/audioPlayer';
 import { uiActions } from '../../../../store/slices/ui';
-import tinycolor from 'tinycolor2';
-import { AddSongToLibraryButton } from '../../../Actions/AddSongToLibrary';
-import { spotifyActions } from '../../../../store/slices/spotify';
+import { useAppDispatch } from '../../../../store/store';
 
 const PlayButton = () => {
-  const paused = useAppSelector((state) => state.spotify.state?.paused);
+  const isPlaying = useAppSelector((state) => state.localPlayer.isPlaying);
   return (
-    <button
-      onClick={() => (!paused ? playerService.pausePlayback() : playerService.startPlayback())}
-    >
-      {paused ? <Play /> : <Pause />}
+    <button onClick={() => (isPlaying ? audioPlayer.pause() : audioPlayer.play())}>
+      {isPlaying ? <Pause /> : <Play />}
     </button>
   );
 };
@@ -33,35 +27,20 @@ const QueueButton = () => {
 };
 
 const NowPlayingBarMobile = () => {
-  const dispatch = useAppDispatch();
-  const position = useAppSelector((state) => state.spotify.state?.position || 0);
-  const duration = useAppSelector((state) => state.spotify.state?.duration || 1);
-  const currentSong = useAppSelector(
-    (state) => state.spotify.state?.track_window.current_track,
-    (a, b) => a?.id === b?.id
-  );
-  const liked = useAppSelector((state) => state.spotify.liked);
-  const [currentColor, setColor] = useState('blue');
+  const position = useAppSelector((state) => state.localPlayer.position);
+  const duration = useAppSelector((state) => state.localPlayer.duration);
+  const currentTrack = useAppSelector((state) => {
+    const { tracks, currentTrackId } = state.localPlayer;
+    return tracks.find((t) => t.id === currentTrackId) ?? null;
+  });
 
-  useEffect(() => {
-    if (currentSong) {
-      getImageAnalysis2(currentSong.album.images[0].url).then((r) => {
-        let color = tinycolor(r);
-        while (color.isLight()) {
-          color = color.darken(10);
-        }
-        setColor(color.toHexString());
-      });
-    }
-  }, [currentSong]);
-
-  if (!currentSong) return <div></div>;
+  if (!currentTrack) return <div />;
 
   return (
     <div>
       <div
         className='mobile-player'
-        style={{ background: `linear-gradient(${currentColor} -50%, rgb(18, 18, 18) 300%)` }}
+        style={{ background: 'linear-gradient(#1a3a2a -50%, rgb(18, 18, 18) 300%)' }}
       >
         <Row justify='space-between'>
           <Col>
@@ -79,14 +58,6 @@ const NowPlayingBarMobile = () => {
               }}
             >
               <QueueButton />
-              <AddSongToLibraryButton
-                size={17}
-                isSaved={liked}
-                id={currentSong?.id!}
-                onToggle={() => {
-                  dispatch(spotifyActions.setLiked({ liked: !liked }));
-                }}
-              />
               <PlayButton />
             </div>
           </Col>
@@ -94,10 +65,8 @@ const NowPlayingBarMobile = () => {
         <div className='time-line'>
           <div
             className='current-time'
-            style={{
-              width: `${(position / duration) * 100}%`,
-            }}
-          ></div>
+            style={{ width: duration > 0 ? `${(position / duration) * 100}%` : '0%' }}
+          />
         </div>
       </div>
     </div>

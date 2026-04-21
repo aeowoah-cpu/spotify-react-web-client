@@ -1,4 +1,4 @@
-import SongDetails from './SongDetails';
+import SongDetails, { PlayerSync } from './SongDetails';
 import PlayControls from './PlayControls';
 import ExtraControlButtons from './ExtraButtons';
 import NowPlayingBarMobile from './mobilePlayer';
@@ -8,6 +8,9 @@ import { OtherDeviceAlert } from './otherDevice';
 const NowPlayingBar = () => {
   return (
     <>
+      {/* Keeps audioPlayer in sync with Redux currentTrackId changes */}
+      <PlayerSync />
+
       <div>
         <div className='w-full bg-black p-4 flex items-center justify-between h-full mobile-hidden'>
           <SongDetails />

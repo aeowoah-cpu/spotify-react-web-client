@@ -1,62 +1,28 @@
-import { memo, useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-
-import { Popconfirm } from 'antd';
-import { WhiteButton } from '../../../../Button';
-import { DetailsCard } from '../../NowPlaying/Details/card';
-
-// Redux
-import { uiActions } from '../../../../../store/slices/ui';
-import { loginToSpotify } from '../../../../../store/slices/auth';
-import { useAppDispatch, useAppSelector } from '../../../../../store/store';
+import { memo } from 'react';
+import { Link } from 'react-router-dom';
 
 export const LibraryLoginInfo = memo(() => {
-  const [t] = useTranslation(['home']);
-  const dispatch = useAppDispatch();
-  const tooltipOpen = useAppSelector((state) => state.ui.loginTooltipOpen);
-
-  const onClose = useCallback(() => {
-    dispatch(uiActions.closeLoginTooltip());
-  }, [dispatch]);
-
-  const onConfirm = useCallback(() => {
-    return dispatch(loginToSpotify());
-  }, [dispatch]);
-
-  useEffect(() => {
-    return () => {
-      onClose();
-    };
-  }, [onClose]);
-
   return (
-    <Popconfirm
-      icon={null}
-      open={tooltipOpen}
-      placement='left'
-      onCancel={onClose}
-      okText={t(`Log In`)}
-      onConfirm={onConfirm}
-      cancelText={t(`Not now`)}
-      title={t('Create a playlist')}
-      cancelButtonProps={{ type: 'text' }}
-      okButtonProps={{ className: 'white-button small' }}
-      description={t('Log in to create and share playlists.')}
-    >
-      <div style={{ marginRight: -5 }}>
-        <DetailsCard title={t(`Let's access your library`)}>
-          <p style={{ fontWeight: 400, color: '#fff' }}>
-            {t(`Log In to access all the features of the app`)}
-          </p>
-          <div style={{ marginTop: 20, marginBottom: 30, position: 'relative' }}>
-            <WhiteButton
-              size='small'
-              title={t('Log In')}
-              onClick={() => dispatch(loginToSpotify())}
-            />
-          </div>
-        </DetailsCard>
+    <div style={{ padding: '16px 12px', color: '#b3b3b3', fontSize: '0.85rem' }}>
+      <p style={{ fontWeight: 700, color: '#fff', marginBottom: 6 }}>Your Library</p>
+      <p>Upload your music to start listening.</p>
+      <div style={{ marginTop: 16 }}>
+        <Link
+          to='/my-music'
+          style={{
+            display: 'inline-block',
+            padding: '8px 16px',
+            borderRadius: 9999,
+            background: '#1db954',
+            color: '#000',
+            fontWeight: 700,
+            fontSize: '0.8rem',
+            textDecoration: 'none',
+          }}
+        >
+          Go to My Music
+        </Link>
       </div>
-    </Popconfirm>
+    </div>
   );
 });
