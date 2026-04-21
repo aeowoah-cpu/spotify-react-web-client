@@ -1,0 +1,222 @@
+// ── Apple Music Home Sections ────────────────────────────────────────────────
+
+// Track list
+.apple-tracks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.apple-track-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  outline: none;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.07);
+
+    .apple-track-row__index { opacity: 0; }
+    .apple-track-row__preview { opacity: 1; }
+  }
+
+  &--active {
+    .apple-track-row__title { color: #fa2d48; }
+    .apple-track-row__num { color: #fa2d48; }
+  }
+}
+
+.apple-track-row__num {
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: #888;
+  position: relative;
+}
+
+.apple-track-row__index {
+  transition: opacity 0.15s;
+}
+
+.apple-track-row__art {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.apple-track-row__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.apple-track-row__title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s;
+}
+
+.apple-track-row__artist {
+  font-size: 0.78rem;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apple-track-row__duration {
+  font-size: 0.8rem;
+  color: #666;
+  flex-shrink: 0;
+  width: 38px;
+  text-align: right;
+}
+
+.apple-track-row__preview {
+  font-size: 0.7rem;
+  color: #fa2d48;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.apple-track-row__link {
+  color: #888;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+
+  &:hover { color: #fa2d48; }
+}
+
+// Equalizer animation for active track
+.apple-eq-icon {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+
+  span {
+    display: block;
+    width: 3px;
+    background: #fa2d48;
+    border-radius: 2px;
+    animation: apple-eq 0.8s ease-in-out infinite;
+
+    &:nth-child(1) { height: 6px; animation-delay: 0s; }
+    &:nth-child(2) { height: 10px; animation-delay: 0.2s; }
+    &:nth-child(3) { height: 7px; animation-delay: 0.4s; }
+  }
+}
+
+@keyframes apple-eq {
+  0%, 100% { transform: scaleY(0.4); }
+  50%       { transform: scaleY(1); }
+}
+
+// Skeleton loader
+.apple-tracks-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.apple-track-skeleton {
+  height: 52px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// Album grid
+.apple-albums-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.apple-album-card {
+  text-decoration: none;
+  display: block;
+
+  &:hover .apple-album-card__overlay {
+    opacity: 1;
+  }
+}
+
+.apple-album-card__art-wrap {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  margin-bottom: 8px;
+}
+
+.apple-album-card__art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s;
+
+  .apple-album-card:hover & {
+    transform: scale(1.04);
+  }
+}
+
+.apple-album-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.apple-album-card__title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apple-album-card__artist {
+  font-size: 0.75rem;
+  color: #888;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

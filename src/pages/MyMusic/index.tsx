@@ -116,7 +116,7 @@ const EmptyState: FC<{ onUpload: () => void }> = ({ onUpload }) => (
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 interface MyMusicPageProps {
-  container?: RefObject<HTMLDivElement>;
+  container?: RefObject<HTMLDivElement | null>;
 }
 
 const MyMusicPage: FC<MyMusicPageProps> = () => {

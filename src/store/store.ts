@@ -33,6 +33,7 @@ import searchHistoryReducer from './slices/searchHistory';
 import artistDiscographyReducer from './slices/discography';
 import editPlaylistModalReducer from './slices/editPlaylistModal';
 import localPlayerReducer from './slices/localPlayer';
+import appleMusicHomeReducer from './slices/appleMusicHome';
 import expireReducer from 'redux-persist-expire';
 
 const appReducer = combineReducers({
@@ -56,6 +57,7 @@ const appReducer = combineReducers({
   artistDiscography: artistDiscographyReducer,
   editPlaylistModal: editPlaylistModalReducer,
   localPlayer: localPlayerReducer,
+  appleMusicHome: appleMusicHomeReducer,
 });
 
 // @ts-ignore
