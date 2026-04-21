@@ -3,7 +3,7 @@ import './styles/App.scss';
 
 // Utils
 import i18next from 'i18next';
-import { FC, Suspense, lazy, memo, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, Suspense, lazy, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // Components
 import { ConfigProvider } from 'antd';
