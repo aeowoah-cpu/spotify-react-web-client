@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@ant-design/pro-form": "^2.32.0",
+    "@supabase/supabase-js": "^2.104.0",
     "antd": "^5.27.2",
     "axios": "^1.13.2",
     "colorthief": "^2.6.0",
